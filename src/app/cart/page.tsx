@@ -1,13 +1,13 @@
+// app/cart/page.tsx
 import { Suspense } from 'react'
 import CartContent from './CartContent'
 
-export default async function CartPage({
+export default function CartPage({
   searchParams,
 }: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+  searchParams: { [key: string]: string | string[] | undefined }
 }) {
-  const params = await searchParams
-  const step = params.step || '1'
+  const step = searchParams.step || '1'
   const activeStep = parseInt(Array.isArray(step) ? step[0] : step)
 
   return (
