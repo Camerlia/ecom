@@ -1,3 +1,4 @@
+// app/cart/CartContent.tsx
 "use client"
 
 import { PaymentForm } from "@/components/PaymentForm";
@@ -9,20 +10,25 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useState } from "react";
 
-const CartPage = () => {
+const CartContent = () => {
   const steps = [
     { id: 1, name: "Shopping Cart" },
-    { id: 2, name: "Shopping Address" },
+    { id: 2, name: "Shipping Address" }, // Fixed typo: "Shopping" to "Shipping"
     { id: 3, name: "Payment Method" },
   ];
 
-  const {cart, removeFromCart} = useCartStore()
-
-  const param = useSearchParams();
+  const { cart, removeFromCart } = useCartStore();
+  const params = useSearchParams();
   const router = useRouter();
-  const [shippingForm, setShippingForm] = useState<ShoppingFormInput>()
+  const [shippingForm, setShippingForm] = useState<ShoppingFormInput>();
 
-  const activeStep = parseInt(param.get("step") || "1")
+  const activeStep = parseInt(params.get("step") || "1");
+
+  const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const discount = subtotal * 0.1; // 10% discount
+  const shippingFee = 10;
+  const total = subtotal - discount + shippingFee;
+
   return (
     <div className="flex flex-col gap-8 items-center justify-center my-12">
       <h1 className="text-2xl font-medium">Shopping Cart</h1>
@@ -42,7 +48,7 @@ const CartPage = () => {
               {step.id}
             </div>
             <p
-              className={`text-sm font-meduim ${
+              className={`text-sm font-medium ${
                 step.id === activeStep ? "text-gray-800" : "text-gray-400"
               }`}
             >
@@ -51,13 +57,14 @@ const CartPage = () => {
           </div>
         ))}
       </div>
+
       {/* Steps and details */}
       <div className="w-full flex flex-col lg:flex-row gap-16">
-        {/* Steps */}
+        {/* Steps Content */}
         <div className="w-full lg:w-7/12 shadow-lg border-1 border-gray-100 p-8 rounded-lg flex flex-col gap-8">
-          {activeStep === 1
-            ? cart.map((item) => (
-                // SINGLE CART ITEM
+          {activeStep === 1 ? (
+            cart.length > 0 ? (
+              cart.map((item) => (
                 <div
                   className="flex items-center justify-between"
                   key={item.id + item.selectedSize + item.selectedColor}
@@ -99,48 +106,51 @@ const CartPage = () => {
                   </button>
                 </div>
               ))
-            : activeStep === 2 ? (
-                <ShippingForm setShippingForm={setShippingForm}  />
-            ):(
-              activeStep === 3 && shippingForm ? (<PaymentForm />) : (<p className="text-sm text-gray-500">Please fill in the shipping form to continue.</p>)
-              
+            ) : (
+              <p className="text-center text-gray-500">Your cart is empty</p>
             )
-            }
+          ) : activeStep === 2 ? (
+            <ShippingForm setShippingForm={setShippingForm} />
+          ) : activeStep === 3 && shippingForm ? (
+            <PaymentForm />
+          ) : (
+            <p className="text-sm text-gray-500">
+              Please fill in the shipping form to continue.
+            </p>
+          )}
         </div>
-        {/* Details */}
+
+        {/* Cart Details */}
         <div className="w-full lg:w-5/12 shadow-lg border-1 border-gray-100 p-8 rounded-lg flex flex-col gap-8 h-max">
           <h2 className="font-semibold">Cart Details</h2>
           <div className="flex flex-col gap-4">
             <div className="flex justify-between text-sm">
               <p className="text-gray-500">Subtotal</p>
+              <p className="font-medium">${subtotal.toFixed(2)}</p>
             </div>
             <div className="flex justify-between text-sm">
               <p className="text-gray-500">Discount(10%)</p>
-              <p className="font-medium">$ 10</p>
+              <p className="font-medium">${discount.toFixed(2)}</p>
             </div>
             <div className="flex justify-between text-sm">
               <p className="text-gray-500">Shipping Fee</p>
-              <p className="font-medium">$10</p>
+              <p className="font-medium">${shippingFee.toFixed(2)}</p>
             </div>
             <hr className="border-gray-200" />
             <div className="flex justify-between">
               <p className="text-gray-800 font-semibold">Total</p>
-              <p className="font-medium">
-                $
-                {cart
-                  .reduce((acc, item) => acc + item.price * item.quantity, 0)
-                  .toFixed(2)}
-              </p>
+              <p className="font-medium">${total.toFixed(2)}</p>
             </div>
-             {activeStep === 1 && (
-            <button
-              onClick={() => router.push("/cart?step=2", { scroll: false })}
-              className="w-full bg-gray-800 hover:bg-gray-900 transition-all duration-300 text-white p-2 rounded-lg cursor-pointer flex items-center justify-center gap-2"
-            >
-              Continue
-              <ArrowRight className="w-3 h-3" />
-            </button>
-          )}
+
+            {activeStep === 1 && cart.length > 0 && (
+              <button
+                onClick={() => router.push("/cart?step=2", { scroll: false })}
+                className="w-full bg-gray-800 hover:bg-gray-900 transition-all duration-300 text-white p-2 rounded-lg cursor-pointer flex items-center justify-center gap-2"
+              >
+                Continue
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -148,4 +158,4 @@ const CartPage = () => {
   );
 };
 
-export default CartPage;
+export default CartContent;
